@@ -1,0 +1,1 @@
+project(obs-ccc-hymns)
