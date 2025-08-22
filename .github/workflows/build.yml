@@ -1,0 +1,54 @@
+name: Build (Windows/macOS/Linux)
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake qt6-base-dev
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build -j$(nproc)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: build/
+
+  macos:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          brew update
+          brew install cmake qt@6
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix qt@6)" >> $GITHUB_ENV
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.CMAKE_PREFIX_PATH }}"
+      - name: Build
+        run: cmake --build build --config Release -j3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-build
+          path: build/
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config Release -j2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win-build
+          path: build/
